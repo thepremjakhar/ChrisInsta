@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero Grawitty - CS Art & Tattoo Growth Plan</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for in-browser JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        body {
+            background-color: #000;
+            color: white;
+            margin: 0;
+            padding: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        /* Hide scrollbar for a cleaner look but keep functionality */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46; 
+        }
+
+        /* Custom glow animation */
+        @keyframes subtleGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- CUSTOM SCROLL HOOK FOR PARALLAX & GRADIENTS ---
+        const useScroll = () => {
+            const [scrollY, setScrollY] = useState(0);
+            const [scrollProgress, setScrollProgress] = useState(0);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    const currentScrollY = window.scrollY;
+                    const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+                    
+                    setScrollY(currentScrollY);
+                    setScrollProgress(currentScrollY / totalScroll);
+                };
+
+                window.addEventListener('scroll', handleScroll, { passive: true });
+                // Initial call
+                handleScroll();
+                
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            return { scrollY, scrollProgress };
+        };
+
+        // --- CUSTOM ICONS (Upgraded with gradient stroke support) ---
+        const IconWrapper = ({ children, className = "" }) => (
+            <div className={`relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-zinc-800/80 to-black border border-zinc-700/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] group-hover:border-zinc-400/50 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all duration-500 ${className}`}>
+                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl duration-500" />
+                {children}
+            </div>
+        );
+
+        const Lock = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+        const ArrowRight = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>;
+        const Target = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
+        const MapPin = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>;
+        const Users = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+        const TrendingUp = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>;
+        const Camera = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>;
+        const CheckCircle2 = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>;
+        const Zap = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+        const ShieldCheck = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>;
+        const Award = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>;
+
+        // --- ENHANCED ANIMATION COMPONENTS ---
+        const Reveal = ({ children, delay = 0, direction = 'up', amount = 0.2 }) => {
+            const [isVisible, setIsVisible] = useState(false);
+            const ref = useRef(null);
+
+            useEffect(() => {
+                const observer = new IntersectionObserver(
+                    ([entry]) => {
+                        if (entry.isIntersecting) {
+                            setIsVisible(true);
+                            observer.unobserve(entry.target);
+                        }
+                    },
+                    { threshold: amount, rootMargin: '0px 0px -50px 0px' }
+                );
+
+                if (ref.current) observer.observe(ref.current);
+                return () => observer.disconnect();
+            }, [amount]);
+
+            const getTransform = () => {
+                if (isVisible) return 'translate-x-0 translate-y-0 opacity-100 blur-none scale-100';
+                switch (direction) {
+                    case 'up': return 'translate-y-16 opacity-0 blur-[4px] scale-95';
+                    case 'down': return '-translate-y-16 opacity-0 blur-[4px] scale-95';
+                    case 'left': return 'translate-x-16 opacity-0 blur-[4px] scale-95';
+                    case 'right': return '-translate-x-16 opacity-0 blur-[4px] scale-95';
+                    default: return 'translate-y-16 opacity-0 blur-[4px] scale-95';
+                }
+            };
+
+            return (
+                <div
+                    ref={ref}
+                    className={`transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${getTransform()}`}
+                    style={{ transitionDelay: `${delay}ms` }}
+                >
+                    {children}
+                </div>
+            );
+        };
+
+        // --- DATA ---
+        const phases = [
+            {
+                number: "01",
+                months: "MONTHS 1–2",
+                title: "Profile & Content Alignment",
+                icon: <Camera className="w-6 h-6" />,
+                description: "Making your profile instantly clear and convincing.",
+                steps: [
+                    { title: "Profile Clarity", text: "Style/focus, Location, Booking direction.", outcome: "No confusion = higher chances of inquiry." },
+                    { title: "Pinned Posts Strategy", text: "Pin: 1 Healed Result, 1 Signature Work, 1 Studio/Setup.", outcome: "Answers: Is he good? Can I trust him? Is it safe?" },
+                    { title: "Weekly Structure", text: "1 Healed Post (Friday), 1 Reel (Process-based).", outcome: "Make people feel confident, not just impressed." },
+                    { title: "Captions That Convert", text: "Context is king: When it was done, idea, process detail.", outcome: "Makes the post feel real, not just visual." }
+                ]
+            },
+            {
+                number: "02",
+                months: "MONTHS 3–4",
+                title: "Attract Local Clients",
+                icon: <MapPin className="w-6 h-6" />,
+                description: "Focusing on people who can actually book you.",
+                steps: [
+                    { title: "Location-Focused Content", text: "Use location tags, local hashtags, mention nearby areas.", outcome: "Make them feel: “He’s close, I can go to him.”" },
+                    { title: "Referral Push", text: "No discounts. Happy clients bring friends naturally.", outcome: "Keep it natural, not salesy." },
+                    { title: "Offline Connection", text: "Build connections at local barbershops & hubs.", outcome: "Instagram works better when they already know you." }
+                ]
+            },
+            {
+                number: "03",
+                months: "MONTHS 5–6",
+                title: "Build Deep Trust",
+                icon: <ShieldCheck className="w-6 h-6" />,
+                description: "Making your content do more of the heavy lifting.",
+                steps: [
+                    { title: "Show The Process", text: "Short clips working, setup moments, quick transitions.", outcome: "Builds comfort and familiarity before they book." },
+                    { title: "Before / After Posts", text: "Clean comparisons showing the transformation.", outcome: "Easy to understand = easy to trust." },
+                    { title: "Structured Booking Flow", text: "Simple booking instructions (size, placement, idea).", outcome: "Filters out time-wasters automatically." }
+                ]
+            },
+            {
+                number: "04",
+                months: "MONTHS 7–8",
+                title: "Clients as a Growth Channel",
+                icon: <Users className="w-6 h-6" />,
+                description: "Your existing work starts bringing new people.",
+                steps: [
+                    { title: "Client Tags & Reposts", text: "Encourage clients to post and tag. Repost with context.", outcome: "Builds bulletproof social proof." },
+                    { title: "Limited Availability Strategy", text: "“Few spots left” / “Booking open for next week”.", outcome: "Creates urgency without pressure." }
+                ]
+            },
+            {
+                number: "05",
+                months: "MONTHS 9–10",
+                title: "Expand Reach Smartly",
+                icon: <TrendingUp className="w-6 h-6" />,
+                description: "Growing your footprint without losing local focus.",
+                steps: [
+                    { title: "Guest Days (New Areas)", text: "Work from another location occasionally. Announce early.", outcome: "Brings new audience without big investment." },
+                    { title: "Talking Content", text: "Speak on camera about bookings or preparation.", outcome: "Builds massive authority and familiarity." }
+                ]
+            },
+            {
+                number: "06",
+                months: "MONTHS 11–12",
+                title: "Solidify Client Base",
+                icon: <Award className="w-6 h-6" />,
+                description: "Focusing on stability, consistency, and retention.",
+                steps: [
+                    { title: "Repeat Visibility", text: "Stay in front of past clients via stories & check-ins.", outcome: "You stay top-of-mind for their next piece." },
+                    { title: "Show Ongoing Work", text: "Multi-session work and progress updates.", outcome: "Proves consistency and commitment to large projects." }
+                ]
+            }
+        ];
+
+        // --- MAIN APPLICATION ---
+        function App() {
+            const [loading, setLoading] = useState(true);
+            const { scrollY, scrollProgress } = useScroll();
+
+            // Initial Splash Screen Logic
+            useEffect(() => {
+                const timer = setTimeout(() => {
+                    setLoading(false);
+                }, 2800);
+                return () => clearTimeout(timer);
+            }, []);
+
+            if (loading) {
+                return (
+                    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-sans">
+                        <div className="flex items-center space-x-3 mb-6 animate-pulse">
+                            <Lock className="w-5 h-5 text-zinc-500" />
+                            <span className="tracking-[0.3em] text-xs text-zinc-500 uppercase">Secure Link Establishing</span>
+                        </div>
+                        <div className="h-px w-48 bg-zinc-800 relative overflow-hidden rounded-full">
+                            <div className="absolute top-0 left-0 h-full bg-white shadow-[0_0_10px_#fff] animate-[loading_2.5s_ease-in-out_forwards]" style={{ width: '0%', animation: 'loading 2.5s ease-in-out forwards' }}>
+                            </div>
+                        </div>
+                        <div className="mt-8 text-center space-y-2 opacity-0" style={{ animation: 'fadeIn 0.5s ease-in 1s forwards' }}>
+                            <h1 className="text-2xl font-light tracking-widest uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">Zero Grawitty</h1>
+                            <p className="text-zinc-600 text-sm tracking-widest uppercase">Client Portal // CS Art</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen font-sans selection:bg-white selection:text-black relative">
+                    
+                    {/* SVG DEFINITIONS FOR ICONS */}
+                    <svg width="0" height="0" className="absolute hidden">
+                        <defs>
+                            <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#ffffff" />
+                                <stop offset="100%" stopColor="#71717a" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+
+                    {/* DYNAMIC SCROLL BACKGROUND GRADIENT */}
+                    <div 
+                        className="fixed inset-0 z-[-2] pointer-events-none transition-colors duration-300"
+                        style={{ 
+                            background: `linear-gradient(to bottom, #000 0%, rgba(20,20,24,${Math.sin(scrollProgress * Math.PI)}) 50%, #000 100%)` 
+                        }}
+                    />
+
+                    {/* PARALLAX GLOW ORBS */}
+                    <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
+                        <div 
+                            className="absolute top-[10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-zinc-800/20 blur-[150px] transition-transform duration-75"
+                            style={{ transform: `translateY(${scrollY * -0.1}px)` }} 
+                        />
+                        <div 
+                            className="absolute bottom-[10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-zinc-700/10 blur-[120px] transition-transform duration-75"
+                            style={{ transform: `translateY(${scrollY * -0.2}px)` }} 
+                        />
+                    </div>
+
+                    {/* STICKY SCROLL PROGRESS BAR */}
+                    <div className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 w-1 h-[40vh] bg-zinc-900 rounded-full z-50 overflow-hidden hidden xl:block shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                        <div 
+                            className="w-full bg-gradient-to-b from-white via-zinc-400 to-white rounded-full relative" 
+                            style={{ 
+                                height: `${scrollProgress * 100}%`,
+                                transition: 'height 0.1s ease-out'
+                            }} 
+                        >
+                            <div className="absolute bottom-0 w-full h-8 bg-white blur-[4px]" style={{ animation: 'subtleGlow 2s infinite' }} />
+                        </div>
+                    </div>
+
+                    <div className="relative z-10 max-w-4xl mx-auto px-6 py-12 md:py-24">
+                        
+                        {/* HEADER */}
+                        <header className="mb-24 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-zinc-800/50 pb-8">
+                            <Reveal direction="left">
+                                <div>
+                                    <h2 className="text-xs font-bold tracking-[0.4em] uppercase text-zinc-500 mb-2">Zero Grawitty</h2>
+                                    <div className="flex items-center space-x-2 text-red-400/80 bg-red-950/30 border border-red-500/20 px-3 py-1.5 rounded-full w-max shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                                        <Lock className="w-3 h-3" />
+                                        <span className="text-[10px] tracking-widest uppercase font-semibold">Confidential</span>
+                                    </div>
+                                </div>
+                            </Reveal>
+                            <Reveal direction="right" delay={200}>
+                                <div className="mt-6 md:mt-0 text-left md:text-right">
+                                    <h1 className="text-xl md:text-2xl font-light tracking-wide text-white">CS Art & Tattoo</h1>
+                                    <p className="text-zinc-500 tracking-widest uppercase text-xs mt-1">April 2026</p>
+                                </div>
+                            </Reveal>
+                        </header>
+
+                        {/* HERO / INTRO */}
+                        <section className="mb-32">
+                            <Reveal delay={300}>
+                                <div className="inline-flex items-center space-x-3 bg-zinc-900/50 border border-zinc-800 px-4 py-2 rounded-full mb-8 backdrop-blur-sm">
+                                    <Target className="w-4 h-4 text-zinc-300" />
+                                    <p className="text-xs font-semibold tracking-widest text-zinc-400 uppercase">The Objective</p>
+                                </div>
+                                <h1 className="text-4xl md:text-7xl font-light leading-[1.05] tracking-tight text-white mb-8">
+                                    Turning Visibility into <br className="hidden md:block"/>
+                                    <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-400 to-zinc-700">Consistent Clients.</span>
+                                </h1>
+                            </Reveal>
+
+                            <Reveal delay={500}>
+                                <div className="prose prose-invert prose-lg text-zinc-400 max-w-2xl leading-relaxed border-l-2 border-zinc-800 pl-6">
+                                    <p className="text-xl text-zinc-200">
+                                        Chris, this plan is focused on one thing only: <strong>Getting you more real, paying clients through Instagram.</strong>
+                                    </p>
+                                    <p>Not just reach. Not just likes. <strong className="text-white border-b border-white/30 pb-0.5">Actual bookings.</strong></p>
+                                    <p>You already have strong work. That part is handled. What we’re doing here is building the bridge between attention and action.</p>
+                                </div>
+                            </Reveal>
+                        </section>
+
+                        {/* SECTION 00 - WHERE YOU ARE */}
+                        <section className="mb-32">
+                            <Reveal>
+                                <div className="group border border-zinc-800/80 hover:border-zinc-600/50 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.08)] bg-gradient-to-br from-zinc-950/80 to-zinc-900/40 p-8 md:p-12 rounded-3xl backdrop-blur-md relative overflow-hidden transition-all duration-700 hover:-translate-y-1">
+                                    {/* Animated light sweep */}
+                                    <div className="absolute top-0 -left-[100%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/5 to-transparent group-hover:left-[200%] transition-all duration-[1.5s] ease-in-out" />
+                                    
+                                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-white via-zinc-500 to-zinc-900 rounded-l-3xl" />
+                                    
+                                    <div className="grid md:grid-cols-2 gap-12 relative z-10">
+                                        <div>
+                                            <h3 className="text-xs font-bold tracking-[0.3em] text-zinc-500 mb-6 uppercase">00 — Where You Are Right Now</h3>
+                                            <h4 className="text-3xl font-light text-white mb-8">You have a big advantage.</h4>
+                                            <ul className="space-y-5">
+                                                {['Good-looking content', 'Solid engagement', 'A presence that stands out'].map((item, i) => (
+                                                    <li key={i} className="flex items-center text-zinc-300 text-lg">
+                                                        <CheckCircle2 className="w-5 h-5 text-zinc-500 mr-4 shrink-0" />
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                        
+                                        <div className="bg-black/50 p-8 rounded-2xl border border-zinc-800/80 shadow-inner">
+                                            <h4 className="text-sm font-semibold tracking-widest text-zinc-500 uppercase mb-4">The Gap</h4>
+                                            <p className="text-white mb-6 leading-relaxed">
+                                                Attention is there, but conversion can be stronger. People are seeing, but not always booking.
+                                            </p>
+                                            <div className="bg-gradient-to-r from-zinc-100 to-zinc-300 text-black p-5 rounded-xl font-semibold text-sm flex items-center justify-between shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                                                <span>The Strategy</span>
+                                                <ArrowRight className="w-5 h-5" />
+                                            </div>
+                                            <p className="text-sm text-zinc-500 mt-5 italic">
+                                                "Turn your Instagram into a client conversion system."
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Reveal>
+                        </section>
+
+                        {/* TIMELINE SECTION */}
+                        <section className="mb-32 relative">
+                            <Reveal>
+                                <div className="flex items-center justify-center mb-16">
+                                    <div className="h-px w-12 bg-zinc-800 mr-4" />
+                                    <h3 className="text-xs font-bold tracking-[0.4em] text-zinc-400 uppercase">The 12-Month Roadmap</h3>
+                                    <div className="h-px w-12 bg-zinc-800 ml-4" />
+                                </div>
+                            </Reveal>
+
+                            <div className="space-y-8">
+                                {phases.map((phase, index) => (
+                                    <Reveal key={index} delay={index * 100}>
+                                        <div className="group relative border border-zinc-800/60 bg-zinc-950/40 hover:bg-zinc-900/60 hover:border-zinc-600/50 hover:shadow-[0_15px_40px_-15px_rgba(255,255,255,0.1)] transition-all duration-500 p-8 md:p-10 rounded-3xl hover:-translate-y-1 backdrop-blur-sm overflow-hidden">
+                                            
+                                            {/* Hover Glow Background */}
+                                            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl" />
+
+                                            <div className="flex flex-col md:flex-row md:items-start gap-8 md:gap-12 relative z-10">
+                                                
+                                                {/* Left Meta */}
+                                                <div className="md:w-1/3 shrink-0">
+                                                    <div className="flex items-center space-x-4 mb-6">
+                                                        <IconWrapper>
+                                                            {phase.icon}
+                                                        </IconWrapper>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-3xl font-light text-zinc-600 group-hover:text-white transition-colors duration-500">{phase.number}</span>
+                                                            <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mt-1">{phase.months}</span>
+                                                        </div>
+                                                    </div>
+                                                    <h4 className="text-2xl font-medium text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-zinc-400 transition-all">{phase.title}</h4>
+                                                    <p className="text-sm text-zinc-400 leading-relaxed">{phase.description}</p>
+                                                </div>
+
+                                                {/* Right Content */}
+                                                <div className="md:w-2/3 grid gap-6">
+                                                    {phase.steps.map((step, idx) => (
+                                                        <div key={idx} className="relative pl-6 before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:bg-zinc-700 before:rounded-full group-hover:before:bg-zinc-300 before:transition-colors before:duration-300">
+                                                            <h5 className="text-white font-medium mb-1.5 tracking-wide">{step.title}</h5>
+                                                            <p className="text-sm text-zinc-400 mb-3">{step.text}</p>
+                                                            <div className="flex items-start bg-black/40 rounded-lg p-3 border border-white/5 group-hover:border-white/10 transition-colors">
+                                                                <span className="mr-3 text-sm leading-none pt-0.5">↳</span>
+                                                                <span className="text-sm font-medium text-zinc-300">{step.outcome}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </Reveal>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* CORE SYSTEM */}
+                        <section className="mb-32">
+                            <Reveal>
+                                <div className="border border-zinc-800 bg-gradient-to-b from-zinc-900 to-black overflow-hidden rounded-3xl flex flex-col md:flex-row shadow-[0_20px_50px_-20px_rgba(255,255,255,0.05)]">
+                                    <div className="p-8 md:p-14 md:w-1/2 flex flex-col justify-center relative">
+                                        <div className="absolute top-0 right-0 w-64 h-64 bg-zinc-800/10 rounded-full blur-[80px]" />
+                                        <h3 className="text-xs font-bold tracking-[0.3em] text-zinc-500 mb-4 uppercase relative z-10">07 — Core Engine</h3>
+                                        <h4 className="text-3xl md:text-4xl font-light text-white mb-6 relative z-10">The Weekly System</h4>
+                                        <p className="text-zinc-400 mb-8 leading-relaxed relative z-10">
+                                            Consistency beats intensity. Follow this simple structure every single week. No need to overcomplicate.
+                                        </p>
+                                        <div className="space-y-3 relative z-10">
+                                            {[
+                                                '1 Healed Post (Trust)', 
+                                                '1 Reel (Process)', 
+                                                'Reply to DMs within 24h', 
+                                                'Active on Stories daily', 
+                                                'Show availability explicitly'
+                                            ].map((item, i) => (
+                                                <div key={i} className="flex items-center space-x-4 bg-white/5 hover:bg-white/10 p-4 rounded-xl border border-white/5 transition-colors duration-300">
+                                                    <Zap className="w-5 h-5 text-zinc-400" />
+                                                    <span className="text-sm font-medium text-zinc-100">{item}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="bg-black/80 p-8 md:p-14 md:w-1/2 flex flex-col justify-center border-t md:border-t-0 md:border-l border-zinc-800 relative backdrop-blur-md">
+                                        <h3 className="text-xs font-bold tracking-[0.3em] text-zinc-500 mb-6 uppercase">08 — The Result</h3>
+                                        <div className="space-y-8 mt-2">
+                                            {[
+                                                'Your audience becomes more local',
+                                                'Your DMs become more serious',
+                                                'Your content builds trust automatically',
+                                                'Your bookings become consistent'
+                                            ].map((res, idx) => (
+                                                <div key={idx} className="flex items-start group">
+                                                    <div className="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-zinc-800 group-hover:bg-white text-zinc-500 group-hover:text-black flex items-center justify-center mr-5 transition-colors duration-300 shadow-sm">
+                                                        <CheckCircle2 className="w-4 h-4" />
+                                                    </div>
+                                                    <p className="text-lg text-zinc-300 group-hover:text-white transition-colors duration-300 font-medium leading-tight">{res}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Reveal>
+                        </section>
+
+                        {/* FOOTER / OUTRO */}
+                        <section className="text-center mb-16 relative">
+                            <Reveal>
+                                <div className="inline-block mb-12">
+                                    <div className="h-24 w-px bg-gradient-to-b from-transparent via-zinc-400 to-transparent mx-auto" />
+                                </div>
+                                <h2 className="text-4xl md:text-6xl font-light text-white mb-10 tracking-tight">
+                                    You don’t need <span className="italic text-zinc-500 font-serif">more</span> content.
+                                </h2>
+                                <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-20">
+                                    {['Better Clarity', 'Better Trust', 'Better Conversion'].map((word, i) => (
+                                        <div key={i} className="flex items-center text-zinc-300 text-xl font-medium tracking-wide">
+                                            {i > 0 && <span className="hidden md:block text-zinc-700 mx-6 text-2xl font-light">+</span>}
+                                            {word}
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-10 max-w-sm mx-auto backdrop-blur-md shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:border-zinc-700 transition-colors">
+                                    <p className="text-xs text-zinc-500 uppercase tracking-[0.3em] mb-3">Prepared by</p>
+                                    <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-400 tracking-widest">LUVY</h3>
+                                    <p className="text-[10px] text-zinc-600 mt-4 tracking-[0.2em]">ZERO GRAWITTY © 2026</p>
+                                </div>
+                            </Reveal>
+                        </section>
+
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
